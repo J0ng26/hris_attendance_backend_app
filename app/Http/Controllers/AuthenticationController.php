@@ -27,6 +27,17 @@ class AuthenticationController extends Controller
             $request
         );
 
+        if ($result instanceof \App\Models\User) {
+            $token = $result->createToken('auth-token')->plainTextToken;
+            $userData = (new UserResource($result))->resolve($request);
+            $userData['token'] = $token;
+
+            return response()->json([
+                'data' => $userData,
+                'token' => $token,
+            ], 200);
+        }
+
         if ($result && is_object($result) && method_exists($result, 'toArray')) {
             return new UserResource($result);
         }

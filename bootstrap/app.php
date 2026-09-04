@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ])
     ->withMiddleware(function ($middleware) {
         $middleware->statefulApi();
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
         $middleware->alias([
             'permission' => CheckPermissionMiddleware::class,
             'app_locked' => ApiRouteLockMiddleware::class,
