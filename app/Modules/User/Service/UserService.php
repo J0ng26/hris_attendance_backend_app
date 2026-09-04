@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class UserService
@@ -115,6 +116,8 @@ class UserService
     public function add(string $username, string $first_name, ?string $middle_name, string $last_name, string $email, bool $active, string $user_type_id, ?string $department_id)
     {
         $tempPassword = $this->generate();
+        $activationToken = 'ACT-' . strtoupper(Str::random(6));
+        $tokenExpiresAt = Carbon::now()->addDays(2);
 
         $userAdded = $this->userRepository->create([
             'username' => $username,
@@ -125,14 +128,35 @@ class UserService
             'email' => $email,
             'active' => $active,
             'user_type_id' => $user_type_id,
-            'department_id' => $department_id
+            'department_id' => $department_id,
+            'activation_token' => $activationToken,
+            'activation_token_expires_at' => $tokenExpiresAt,
         ], ['user_type', 'department']);
 
-        Mail::to($email)->send(new TemporaryPasswordSend($first_name . ' ' . $middle_name . ' ' . $last_name, $tempPassword));
+        // Write activation link & email prominently to Laravel log
+        $activationLink = "http://127.0.0.1:8000/activate?token={$activationToken}";
+        Log::info("=================================================");
+        Log::info(" [ACTIVATION LINK GENERATED FOR USER]");
+        Log::info(" Email:            {$email}");
+        Log::info(" Username:         {$username}");
+        Log::info(" Full Name:        {$first_name} {$last_name}");
+        Log::info(" Activation Token: {$activationToken}");
+        Log::info(" Activation Link:  {$activationLink}");
+        Log::info(" Expires At:       {$tokenExpiresAt->toDateTimeString()}");
+        Log::info(" Temp Password:    {$tempPassword}");
+        Log::info("=================================================");
+
+        try {
+            Mail::to($email)->send(new TemporaryPasswordSend($first_name . ' ' . $middle_name . ' ' . $last_name, $tempPassword));
+        } catch (\Throwable $e) {
+            Log::warning("[MAIL NOTICE] Could not dispatch mail: " . $e->getMessage());
+        }
 
         return Response::json([
             'message' => 'User ' . $userAdded->first_name . ' ' . $userAdded->last_name . ' added successfully',
-            'user' => $userAdded
+            'user' => $userAdded,
+            'activation_token' => $activationToken,
+            'activation_link' => $activationLink,
         ], 201);
     }
 

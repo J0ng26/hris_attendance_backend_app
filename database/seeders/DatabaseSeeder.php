@@ -30,7 +30,20 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt(config('app.user_password')),
             'active' => true,
             'user_type_id' => config('app.user_type_id'),
-            'first_use' => false
-         ]);
+            'first_use' => false,
+        ]);
+
+        if (!User::where('username', 'johndoe')->exists()) {
+            User::create([
+                'username' => 'johndoe',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'email' => 'john.doe@company.com',
+                'password' => bcrypt('password123'),
+                'active' => true,
+                'user_type_id' => config('app.user_type_id'),
+                'first_use' => false
+            ]);
+        }
     }
 }

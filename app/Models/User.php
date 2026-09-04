@@ -32,7 +32,9 @@ class User extends Authenticatable implements HasName, FilamentUser
         'active',
         'user_type_id',
         'department_id',
-        'first_use'
+        'first_use',
+        'activation_token',
+        'activation_token_expires_at',
     ];
 
     /**
@@ -56,7 +58,8 @@ class User extends Authenticatable implements HasName, FilamentUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'active' => 'boolean',
-            'first_use' => 'boolean'
+            'first_use' => 'boolean',
+            'activation_token_expires_at' => 'datetime',
         ];
     }
 
